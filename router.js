@@ -1,4 +1,4 @@
-const {format} = require('util')
+const { format } = require('util')
 const express = require('express')
 const multer = require('multer')
 const cors = require('cors')
@@ -6,6 +6,13 @@ const path = require('path')
 const fs = require('fs')
 
 const router = express.Router();
+
+
+router.get('/fetchgallery', cors(), (req, res, next) => {
+  const imgPath = path.join(__dirname, './testimages');
+  const images = fs.readdirSync(imgPath);
+  res.status(200).send(images);
+})
 
 // const serviceKey = path.join(__dirname, './config/keys2.json');
 // const serviceKeyCut = require('./config/keys.json');
