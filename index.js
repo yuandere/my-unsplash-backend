@@ -1,5 +1,6 @@
 const express = require('express')
 const logger = require('morgan')
+const cors = require('cors')
 const router = require('./router')
 const app = express()
 
@@ -11,6 +12,7 @@ app.set('env', NODE_ENV);
 
 app.use(logger('tiny'));
 app.use(express.json());
+app.use(cors());
 app.use(router);
 
 app.use((err, req, res, next) => {

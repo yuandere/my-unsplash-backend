@@ -1,16 +1,21 @@
 const { format } = require('util')
 const express = require('express')
 const multer = require('multer')
-const cors = require('cors')
 const path = require('path')
 const fs = require('fs')
 const {Storage} = require('@google-cloud/storage')
+const db = require('./queries')
 
 const GOOGLE_CLOUD_PROJECT = "my-unsplash-366500";
 const GCLOUD_STORAGE_BUCKET = "my-unsplash-store";
 
 const router = express.Router();
 
+router.get('/images', db.getImages)
+router.get('/images/:id', db.getImageById)
+router.post('/images', db.addImage)
+router.put('/images/:id', db.updateImage)
+router.delete('/images/:id', db. deleteImage)
 
 // router.get('/fetchgallery', cors(), (req, res, next) => {
 //   const imgPath = path.join(__dirname, './testimages');
@@ -34,17 +39,17 @@ const gStorage = new Storage({
 });
 const bucket = gStorage.bucket(GCLOUD_STORAGE_BUCKET);
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, __dirname + '/images')
-  },
-  filename: function (req, file, cb) {
-    const fileName = file.originalname.replaceAll(' ','');
-    const fileShort = fileName.slice(0, fileName.indexOf('.'));
-    const fileType = fileName.substring(fileName.indexOf('.'));
-    cb(null, fileShort + '-' + Date.now() + fileType)
-  }
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, __dirname + '/images')
+//   },
+//   filename: function (req, file, cb) {
+//     const fileName = file.originalname.replaceAll(' ','');
+//     const fileShort = fileName.slice(0, fileName.indexOf('.'));
+//     const fileType = fileName.substring(fileName.indexOf('.'));
+//     cb(null, fileShort + '-' + Date.now() + fileType)
+//   }
+// });
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,7 +69,7 @@ const upload = multer({
   },
 });
 
-router.get('/fetchgallery', cors(), (req, res, next) => {
+router.get('/fetchgallery', (req, res, next) => {
   const listFiles = async () => {
     const [files] = await gStorage.bucket(GCLOUD_STORAGE_BUCKET).getFiles();
     const filesLocations = [];
@@ -77,7 +82,7 @@ router.get('/fetchgallery', cors(), (req, res, next) => {
   listFiles().catch(console.error);
 })
 
-router.post('/upload', cors(), upload.single('picture'), (req, res, next) => {
+router.post('/upload', upload.single('picture'), (req, res, next) => {
   if (!req.file) {
     res.status(400).send('No file uploaded');
     return
