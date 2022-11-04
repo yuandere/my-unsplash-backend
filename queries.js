@@ -41,7 +41,7 @@ const getImageById = (req, res) => {
       throw err
     }
     res.status(200).json(results.rows)
-  })
+  }) 
 }
 
 const addImage = (req, res) => {
@@ -54,6 +54,39 @@ const addImage = (req, res) => {
     }
     res.status(201).send(`Image added with ID: ${results.rows[0].id}`)
   })
+}
+
+const addImageFile = (req, res) => {
+  const { tag } = req.body;
+  if (!req.file) {
+    res.status(400).send('No file uploaded');
+    return
+  }
+
+  const blob = bucket.file(req.file.originalname);
+  const blobStream = blob.createWriteStream();
+
+  blobStream.on('error', err => {
+    next(err)
+  });
+
+  blobStream.on('finish', () => {
+    const publicUrl = format(
+      `https://storage.googleapis.com/${bucket.name}/${blob.name}`
+    );
+    const url = publicUrl;
+
+    pool.query(
+      'INSERT INTO images (tag, url) VALUES ($1, $2) RETURNING *',
+      [tag, url], (err, results) => {
+      if (err) {
+        throw err
+      }
+      res.status(201).send(`Image added with ID: ${results.rows[0].id} and url: ${url}`)
+    })
+  });
+
+  blobStream.end(req.file.buffer)
 }
 
 const updateImage = (req, res) => {
@@ -83,6 +116,19 @@ const deleteImage = (req, res) => {
   })
 }
 
+const fetchgallery = (req, res, next) => {
+  const listFiles = async () => {
+    const [files] = await gStorage.bucket(GCLOUD_STORAGE_BUCKET).getFiles();
+    const filesLocations = [];
+    console.log('Files:');
+    files.forEach(file => {
+      filesLocations.push(file.metadata.mediaLink);
+    })
+    res.status(200).send(filesLocations);
+  }
+  listFiles().catch(console.error);
+};
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -100,19 +146,6 @@ const upload = multer({
     cb(undefined, true);
   },
 });
-
-const fetchgallery = (req, res, next) => {
-  const listFiles = async () => {
-    const [files] = await gStorage.bucket(GCLOUD_STORAGE_BUCKET).getFiles();
-    const filesLocations = [];
-    console.log('Files:');
-    files.forEach(file => {
-      filesLocations.push(file.metadata.mediaLink);
-    })
-    res.status(200).send(filesLocations);
-  }
-  listFiles().catch(console.error);
-};
 
 const fileUpload = (req, res, next) => {
   if (!req.file) {
@@ -141,9 +174,9 @@ module.exports = {
   getImages,
   getImageById,
   addImage,
+  addImageFile,
   updateImage,
   deleteImage,
   upload,
   fetchgallery,
-  fileUpload
 }

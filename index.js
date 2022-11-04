@@ -16,12 +16,12 @@ app.use(cors());
 
 app.get('/images', db.getImages)
 app.get('/images/:id', db.getImageById)
-app.post('/images', db.addImage)
+app.post('/imagefile', db.upload.single('picture'), db.addImageFile)
+app.post('/imageurl', db.addImage)
 app.put('/images/:id', db.updateImage)
 app.delete('/images/:id', db. deleteImage)
 
 app.get('/fetchgallery', db.fetchgallery)
-app.post('/upload', db.upload.single('picture'), db.fileUpload)
 
 app.use((err, req, res, next) => {
   console.error(err);
