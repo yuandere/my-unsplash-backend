@@ -19,7 +19,8 @@ app.get('/images/:id', db.getImageById)
 app.post('/imagefile', db.upload.single('picture'), db.addImageFile)
 app.post('/imageurl', db.addImage)
 app.put('/images/:id', db.updateImage)
-app.delete('/images/:id', db. deleteImage)
+app.delete('/images/:id', db.deleteImage)
+app.delete('/imagesadmin/:id', db.deleteImageAdmin)
 
 app.get('/fetchgallery', db.fetchgallery)
 
