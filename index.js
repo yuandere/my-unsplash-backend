@@ -22,8 +22,6 @@ app.put('/images/:id', db.updateImage)
 app.delete('/images/:id', db.deleteImage)
 app.delete('/imagesadmin/:id', db.deleteImageAdmin)
 
-app.get('/fetchgallery', db.fetchgallery)
-
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500);

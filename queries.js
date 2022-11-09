@@ -4,7 +4,11 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const { Storage } = require('@google-cloud/storage')
+
 const serviceKey = path.join(__dirname, './config/keys.json');
+const serviceKeyCut = require('./config/keyscut.json');
+// const serviceKeyJoined = { ...serviceKeyCut, "private_key_id": process.env.private_key_id, "private_key": process.env.private_key};
+// fs.writeFileSync(serviceKey, JSON.stringify(serviceKeyJoined)); 
 
 const Pool = require('pg').Pool;
 const pool = new Pool({
@@ -25,7 +29,7 @@ const gStorage = new Storage({
 const bucket = gStorage.bucket(GCLOUD_STORAGE_BUCKET);
 
 const getImages = (req, res) => {
-  pool.query('SELECT id, tag, url FROM images2 ORDER BY id ASC', (err, results) => {
+  pool.query('SELECT id, tag, url FROM images3 ORDER BY id ASC', (err, results) => {
     if (err) {
       throw err
     }
@@ -36,7 +40,7 @@ const getImages = (req, res) => {
 const getImageById = (req, res) => {
   const id = parseInt(req.params.id);
 
-  pool.query('SELECT * FROM images2 WHERE id = $1', [id], (err, results) => {
+  pool.query('SELECT * FROM images3 WHERE id = $1', [id], (err, results) => {
     if (err) {
       throw err
     }
@@ -48,7 +52,7 @@ const addImage = (req, res) => {
   const { tag, url } = req.body.data;
   const password = Math.random().toString(36).substring(2, 7);
   pool.query(
-    'INSERT INTO images2 (tag, url, password) VALUES ($1, $2, $3) RETURNING *',
+    'INSERT INTO images3 (tag, url, password, gcp) VALUES ($1, $2, $3, false) RETURNING *',
     [tag, url, password], (err, results) => {
       if (err) {
         throw err
@@ -80,7 +84,7 @@ const addImageFile = (req, res) => {
     const url = publicUrl;
 
     pool.query(
-      'INSERT INTO images2 (tag, url, password) VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO images3 (tag, url, password, gcp) VALUES ($1, $2, $3, true) RETURNING *',
       [tag, url, password], (err, results) => {
         if (err) {
           throw err
@@ -98,7 +102,7 @@ const updateImage = (req, res) => {
   const { tag, url } = req.body.data;
 
   pool.query(
-    'UPDATE images2 SET tag = $1, url = $2 WHERE id = $3',
+    'UPDATE images3 SET tag = $1, url = $2 WHERE id = $3',
     [tag, url, id], (err, results) => {
       if (err) {
         throw err
@@ -110,10 +114,8 @@ const updateImage = (req, res) => {
 
 const deleteImage = (req, res) => {
   const id = parseInt(req.params.id);
-  console.log(req.body);
-  const password = req.body;
-  console.log(password);
-  pool.query('SELECT * FROM images2 WHERE id = $1 AND password = $2',
+  const { password } = req.body;
+  pool.query('SELECT * FROM images3 WHERE id = $1 AND password = $2',
     [id, password], (err, results) => {
       if (err) {
         throw err
@@ -121,7 +123,16 @@ const deleteImage = (req, res) => {
       if (!results.rows[0]) {
         res.status(403).send('Image id / password mismatch')
       } else {
-        pool.query('DELETE FROM images2 WHERE id = $1',
+        if (results.rows[0].gcp) {
+          const file = bucket.file(results.rows[0].url.substr(49));
+          file.delete((err, apiResponse) => {
+            if (err) {
+              throw err
+            }
+            console.log('204 means the delete was successful -->', apiResponse.statusCode);
+          })
+        };
+        pool.query('DELETE FROM images3 WHERE id = $1',
           [id], (err, results) => {
             if (err) {
               throw err
@@ -136,7 +147,7 @@ const deleteImage = (req, res) => {
 const deleteImageAdmin = (req, res) => {
   const id = parseInt(req.params.id);
 
-  pool.query('DELETE FROM images2 WHERE id = $1',
+  pool.query('DELETE FROM images3 WHERE id = $1',
     [id], (err, results) => {
       if (err) {
         throw err
@@ -144,19 +155,6 @@ const deleteImageAdmin = (req, res) => {
       res.status(200).send(`Image deleted with ID: ${id}`)
     })
 }
-
-const fetchgallery = (req, res, next) => {
-  const listFiles = async () => {
-    const [files] = await gStorage.bucket(GCLOUD_STORAGE_BUCKET).getFiles();
-    const filesLocations = [];
-    console.log('Files:');
-    files.forEach(file => {
-      filesLocations.push(file.metadata.mediaLink);
-    })
-    res.status(200).send('under construction');
-  }
-  listFiles().catch(console.error);
-};
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -185,5 +183,4 @@ module.exports = {
   deleteImage,
   deleteImageAdmin,
   upload,
-  fetchgallery,
 }

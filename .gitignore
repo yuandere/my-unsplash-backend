@@ -1,4 +1,4 @@
 node_modules
 testimages
-config
+config/keys.json
 testing.env
