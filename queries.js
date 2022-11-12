@@ -61,7 +61,7 @@ const addImage = (req, res) => {
     })
 }
 
-const addImageFile = (req, res) => {
+const addImageFile = (req, res, next) => {
   const { tag } = req.body;
   const password = Math.random().toString(36).substring(2, 7);
   if (!req.file) {
