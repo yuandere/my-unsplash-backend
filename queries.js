@@ -1,5 +1,4 @@
 const { format } = require('util')
-const express = require('express')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
@@ -7,15 +6,15 @@ const { Storage } = require('@google-cloud/storage')
 
 const serviceKey = path.join(__dirname, './config/keys.json');
 const serviceKeyCut = require('./config/keyscut.json');
-// const serviceKeyJoined = { ...serviceKeyCut, "private_key_id": process.env.private_key_id, "private_key": process.env.private_key};
-// fs.writeFileSync(serviceKey, JSON.stringify(serviceKeyJoined)); 
+const serviceKeyJoined = { ...serviceKeyCut, "private_key_id": process.env.private_key_id, "private_key": process.env.private_key};
+fs.writeFileSync(serviceKey, JSON.stringify(serviceKeyJoined)); 
 
 const Pool = require('pg').Pool;
 const pool = new Pool({
-  user: 'me',
-  host: 'localhost',
-  database: 'myunsplash',
-  password: 'password',
+  user: 'unsplash_user',
+  host: 'dpg-cdne1bla49984dubmrog-a',
+  database: 'unsplash',
+  password: process.env.dbpass,
   port: 5432,
 })
 
@@ -129,7 +128,7 @@ const deleteImage = (req, res) => {
             if (err) {
               throw err
             }
-            console.log('204 means the delete was successful -->', apiResponse.statusCode);
+            console.log('204 means the google bucket delete was successful -->', apiResponse.statusCode);
           })
         };
         pool.query('DELETE FROM images3 WHERE id = $1',
