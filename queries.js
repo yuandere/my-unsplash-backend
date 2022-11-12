@@ -18,6 +18,9 @@ const pool = new Pool({
   port: 5432,
 })
 
+console.log(serviceKeyJoined);
+console.log(pool);
+
 const GOOGLE_CLOUD_PROJECT = "my-unsplash-366500";
 const GCLOUD_STORAGE_BUCKET = "my-unsplash-store";
 
