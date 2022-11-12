@@ -6,7 +6,7 @@ const { Storage } = require('@google-cloud/storage')
 
 const serviceKey = path.join(__dirname, './config/keys.json');
 const serviceKeyCut = require('./config/keyscut.json');
-const serviceKeyJoined = { ...serviceKeyCut, "private_key_id": process.env.private_key_id, "private_key": process.env.private_key};
+const serviceKeyJoined = { ...serviceKeyCut, "private_key_id": process.env.private_key_id, "private_key": process.env.private_key.replace(/\\n/gm, '\n')};
 fs.writeFileSync(serviceKey, JSON.stringify(serviceKeyJoined)); 
 
 const Pool = require('pg').Pool;
