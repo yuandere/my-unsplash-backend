@@ -2,3 +2,5 @@ node_modules
 testimages
 config/keys.json
 testing.env
+
+*.local
