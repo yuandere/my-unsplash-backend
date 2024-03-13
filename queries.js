@@ -11,9 +11,9 @@ fs.writeFileSync(serviceKey, JSON.stringify(serviceKeyJoined));
 
 const Pool = require('pg').Pool;
 const pool = new Pool({
-  user: 'unsplash_user',
-  host: 'dpg-cfhkg302i3murc9t5qug-a',
-  database: 'unsplash_mh0b',
+  user: process.env.user,
+  host: process.env.host,
+  database: process.env.database,
   password: process.env.dbpass,
   port: 5432,
 })
